@@ -1,0 +1,29 @@
+# 动态规划
+#### 矩阵快速幂
+``` cpp
+//矩阵快速幂模板
+static constexpr i32 SIZE = 2;
+using Matrix = std::array<std::array<i32, SIZE>, SIZE>;
+Matrix mul(Matrix& a, Matrix& b) {
+    Matrix c{};
+    for (i32 i = 0; i < SIZE; i++) {
+        for (i32 k = 0; k < SIZE; k++) {
+            if (a[i][k] == 0) continue;
+            for (i32 j = 0; j < SIZE; j++) {
+                c[i][j] = (c[i][j] + (ll)a[i][k] * b[k][j]) % MOD;
+            }
+        }
+    }
+    return c;
+}
+
+Matrix pow_mul(Matrix a, i64 n, Matrix& f0) {
+    Matrix res = f0;
+    while (n) {
+        if (n & 1) res = mul(a, res);
+        a = mul(a, a);
+        n >>= 1;
+    }
+    return res;
+}
+```
