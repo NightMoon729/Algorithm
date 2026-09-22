@@ -1,0 +1,352 @@
+# 数论
+#### 判断质数
+```cpp
+//判断质数模板
+bool is_prime(i32 n) {
+    for (i32 i = 2; i * i <= n; i++) 
+        if (n % i == 0) return false;
+    return n >= 2; // 1 不是质数
+}
+
+
+//预处理是否为质数
+constexpr int MX = 1'000'001;
+bool is_prime[MX];
+vector<int> primes;
+auto init = [] {
+    ranges::fill(is_prime, true);
+    is_prime[0] = is_prime[1] = false;
+    for (int i = 2; i < MX; i++) {
+        if (is_prime[i]) {
+            primes.push_back(i);
+            for (i64 j = 1LL * i * i; j < MX; j += i) 
+                is_prime[j] = false; 
+        }
+    }
+    return 0;
+}();
+```
+
+#### 质因数分解
+```cpp
+//质因数分解模板
+constexpr i32 MX = 1'000'001;
+bool is_prime[MX];
+vector<i32> primes;
+auto init = [] {
+    ranges::fill(is_prime, true);
+    is_prime[0] = is_prime[1] = false; 
+    for (i32 i = 2; i < MX; i++) {
+        if (is_prime[i]) {
+            primes.push_back(i);
+            for (i64 j = 1LL * i * i; j < MX; j += i) is_prime[j] = false; 
+        }
+    }
+    return 0;
+}();
+
+//最小质因数模板
+constexpr i32 MX = 1'000'001;
+i32 lpf[MX];
+i32 init = [] {
+    for (i32 i = 2; i < MX; i++) 
+        if (lpf[i] == 0) 
+            for (i32 j = i; j < MX; j += i) 
+                if (lpf[j] == 0) lpf[j] = i; 
+    return 0;
+}();
+```
+
+#### 扩展欧几里得算法
+```cpp
+//exgcd（可以求出二元一次不定方程的一个特解）
+i64 exgcd(i64 a, i64 b, i64 &x, i64 &y) { //ax + by = gcd(a, b) 裴蜀定理
+    if (b == 0) {
+        x = 1; y = 0;
+        return a;
+    }
+    i64 d = exgcd(b, a % b, y, x);
+    y -= (a / b) * x;
+    return d;
+} //O(log(n))
+```
+
+#### 中国剩余定理
+```cpp 
+//CRT（求一个同余方程组的一个解）
+i64 crt(const std::vector<i64>& b, const std::vector<i64>& m) {
+    i64 M = 1;
+    for (i64 mi : m) M *= mi;
+    i64 res = 0; //最终构造的答案
+    for (int i = 0; i < m.size(); i++) {
+        i64 mi = m[i]; //模数
+        i64 Mi = M / mi; //要构建一个除了自己其他的都是0的数要用到所有的数
+        i64 inv, y; //模意义上的逆元
+        exgcd(Mi, mi, inv, y); //用到了扩展欧几里得
+        res = (i64)(((i128)res + (i128)b[i] * Mi % M * inv) % M);
+    }
+    res = (res + M) % M;
+    return res;
+}
+```
+
+#### 欧拉定理
+```cpp
+//欧拉定理a ^ phi(m) ≡ (1 % m) 注:gcd(a, m) == 1
+//欧拉函数（n 以内的与 n 互质的数的个数）
+int calaPhi(int n) {
+    int res = n;
+    for (int i = 2; i * i <= n; i++) {
+        if (n % i == 0) {
+            res = res / i * (i - 1);
+            while (n % i == 0) n /= i;
+        }
+    }
+    if (n > 1) res = res / n * (n - 1);
+    return res;
+} //O(sqrt(n))
+
+
+//预处理1 ~ MX的欧拉函数
+int initPhi[MX];
+auto init = [] {
+    for (int i = 1; i < MX; i++) phi[i] = i;
+
+    for (int i = 2; i < MX; i++)
+        if (phi[i] == i)
+            for (int j = i; j < MX; j += i)
+                phi[j] = phi[j] / i * (i - 1);
+    return 0;
+}(); //O(nloglogn)
+
+
+//扩展欧拉定理: 计算 a ^ b % mod, 不需要gcd(a, b) = 1
+int exPhi(int a, int b, int m) {
+    int phi = calaPhi(m);       // 计算 φ(m)
+    if (b >= phi)             // 如果指数 >= φ(m)
+        b = b % phi + phi;      // 降幂：b mod φ(m) + φ(m)
+    return qpow(a, b, m);       // 快速幂计算 a^b mod m
+} // O(sqrt(m) + logb)
+
+
+bool parse_mod(std::string s, i64& n, int m) {
+    bool flg = false;
+    for (char c : s) {
+        n = n * 10 + (c - '0');
+        if (n >= m) {
+            flg = true;
+            n %= m;
+        }
+    }
+    return flg;
+}
+i64 exPhiBigPow(std::string a, std::string b, int m) { //超大指数情形
+    int phi = calaPhi(m);
+    i64 exp = 0, bn = 0; 
+    parse_mod(a, bn, m); //处理超大底数
+    bool flg = parse_mod(b, exp, phi); //处理超大指数
+    if (flg) exp += phi;
+    return qpow(bn, exp, m) % m;
+} // O(sqrt(m) + |b|)
+```
+
+#### 大步小步算法
+```cpp
+//BSGS
+i64 babyStepGiantStep(i64 a, i64 b, i64 p, i64 k) {
+    b %= p;
+    i64 t = std::sqrt(p) + 1; // a ^ l = a ^ (tx + j)
+    std::unordered_map<i64, i64> mp;
+    for (i64 j = 0, x = b; j < t; ++j) { //枚举a ^ j
+        mp[x] = j;
+        x = x * a % p;
+    }
+    a = qpow(a, t, p); //转成a ^ t
+    if (a == 0) {
+        if (b == 0) return 1;
+        return -99;
+    }
+    for (i64 i = 0, x = k; i < t; ++i) {
+        if (mp.contains(x)) {
+            i64 j = mp[x];
+            if (i * t >= j) return i * t - j;
+        }
+        x = x * a % p;
+    }
+    return -99;
+}
+```
+
+#### 莫比乌斯函数
+``` cpp
+//预处理莫比乌斯函数(调和级数写法)
+int mu[MX];
+std::vector<int> divisors[MX];
+auto initMu = []{
+    mu[1] = 1;
+    for (int i = 1; i < MX; ++i)
+        for (int j = i * 2; j < MX; j += i)
+            mu[j] -= mu[i];
+
+    for (int i = 1; i < MX; ++i) {
+        if (mu[i] == 0) continue;
+
+        for (int j = i; j < MX; j += i)
+            divisors[j].push_back(i);
+    }
+    return 0;
+}(); //O(nlogn)
+
+
+//预处理莫比乌斯函数(线性筛写法)
+constexpr int MX = 1e6 + 1;
+int mu[MX];
+std::vector<int> primes;
+bool vis[MX];
+
+auto init = [] {
+    mu[1] = 1;
+    for (int i = 2; i < MX; i++) {
+        if (!vis[i]) {
+            mu[i] = -1;
+            primes.push_back(i);
+        }
+        for (int p : primes) {
+            int v = p * i;
+            if (v >= MX) break;
+            vis[v] = true;
+            if (i % p == 0) {
+                mu[v] = 0;
+                break;
+            }
+            mu[v] = -mu[i];
+        }
+    }
+    return 0;
+}; //O(n)
+```
+
+# 组合数学
+
+#### 快速幂
+```cpp
+//快速幂组合数模板
+const int MOD = 1'000'000'007;
+const int MX = 100'001; 
+i64 F[MX], INV_F[MX];
+i64 qpow(i64 x, i64 n) {
+    i64 res = 1;
+    for (; n; n /= 2) {
+        if (n % 2) {
+            res = res * x % MOD;
+        }
+        x = x * x % MOD;
+    }
+    return res;
+}
+
+auto init = [] {
+    F[0] = 1;
+    for (int i = 1; i < MX; i++)
+        F[i] = F[i - 1] * i % MOD;
+
+    INV_F[MX - 1] = qpow(F[MX - 1], MOD - 2);
+    for (int i = MX - 1; i; i--)
+        INV_F[i - 1] = INV_F[i] * i % MOD;
+    return 0;
+}();
+
+i64 comb(int n, int m) {
+    return m < 0 || m > n ? 0 : F[n] * INV_F[m] % MOD * INV_F[n - m] % MOD;
+}
+
+```
+
+#### lucas定理
+```cpp
+//lucas定理(处理模数m <= n or k的问题)
+i64 lucas(i64 n, i64 k, int mod) {
+    if (k == 0) return 1;
+    return comb(n % mod, k % mod) * lucas(n / mod, k / mod, mod) % mod;
+}
+```
+
+# 线性代数
+#### 线性基
+```cpp
+//线性基模板
+template <typename T>
+class XorBasis {
+    vector<T> b;
+public:
+    XorBasis (i32 n) : b(n) {}
+
+    void insert(T x) {
+        for (i32 i = b.size() - 1; i >= 0; i--) {
+            if (x >> i) {
+                if (b[i] == 0) {
+                    b[i] = x;
+                    return;
+                }
+                x ^= b[i];
+            }
+        }
+    }
+
+    T max_xor() {
+        T res = {};
+        for (i32 i = b.size() - 1; i >= 0; i--)
+            res = max(res, res ^ b[i]);
+        return res;
+    }
+};
+```
+
+# 计算几何
+#### 凸包
+``` cpp
+struct Vec {
+    int x, y;
+
+    Vec sub(const Vec& b) const { // 求两点差
+        return {x - b.x, y - b.y};
+    }
+
+    i64 det(const Vec& b) const { // 叉积公式
+        return 1LL * x * b.y - 1LL * y * b.x;
+    }
+};
+
+std::vector<Vec> convexHull(std::vector<Vec>& points) {
+    std::ranges::sort(points, {}, [](auto& p) { return std::pair(p.x, p.y); });
+    std::vector<Vec> q;
+
+    for (auto& p : points) { // 计算下凸包（从左到右）
+        while (q.size() > 1 && q.back().sub(q[q.size() - 2]).det(p.sub(q.back())) <= 0)
+            q.pop_back();
+        q.push_back(p);
+    }
+
+    int lower_size = q.size();
+    for (auto& p : points | std::views::reverse) { // 计算上凸包（从右到左）
+        while (q.size() > lower_size && q.back().sub(q[q.size() - 2]).det(p.sub(q.back())) <= 0)
+            q.pop_back();
+        q.push_back(p);
+    }
+    q.pop_back();
+    return q;
+}
+```
+
+#### 公式
+```rust
+//三角形面积公式(三点)
+f64 S = abs(x1 * (y2 - y3) + x2 * (y3 - y1) + x3 * (y1 - y2)) / 2;
+f64 S = abs((x2 - x1) * (y3 - y1) - (x3 - x1) * (y2 - y1)) / 2;
+
+//三角形面积公式(三边)
+f64 p = (a + b + c) / 2;
+f64 S = sqrt(p * (p - a) * (p - b) * (p - c)); //海伦公式
+
+std::cout << std::fixed << std::setprecision(15) //输出15位小数
+```
