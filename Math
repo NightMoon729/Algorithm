@@ -272,6 +272,53 @@ i64 lucas(i64 n, i64 k, int mod) {
 ```
 
 # 线性代数
+#### 高斯消元
+```cpp
+//高斯消元
+std::pair<std::vector<f64>, bool> gaussJordanElimination(const Matrix &A, const std::vector<i64> &B) {
+    constexpr f64 eps = 1e-8;
+    int n = A.size();
+    std::vector a(n, std::vector<f64>(n + 1));
+    for (int i = 0; i < n; ++i) { //init
+        for (int j = 0; j < n; ++j) {
+            a[i][j] = A[i][j];
+        }
+        a[i][n] = B[i];
+    }
+
+    int row = 0; //从初始行开始找
+    for (int col = 0; col < n; ++col) {
+        int pivot = row;
+        for (int i = row; i < n; ++i)
+            if (std::abs(a[i][col]) > std::abs(a[pivot][col])) pivot = i; //找到一列中最大的一个
+
+        if (std::abs(a[pivot][col]) < eps) continue;
+        std::swap(a[row], a[pivot]);
+        for (int j = col + 1; j <= n; ++j)
+            a[row][j] /= a[row][col];
+
+        for (int i = 0; i < n; ++i) { //将一列元素全变成0
+            if (i == row) continue;
+            for (int j = col + 1; j <= n; ++j)
+                a[i][j] -= a[i][col] * a[row][j];
+        }
+        ++row;
+    }
+
+    if (row < n) { 
+        for (int i = row; i < n; ++i) {
+            if (std::abs(a[i][n]) > eps)
+                return {{}, false}; //无解
+        }
+        return {{}, true}; //无穷多解
+    }
+
+    std::vector<f64> res(n);
+    for (int i = 0; i < n; ++i) res[i] = a[i][n];
+    return {res, false};
+}
+```
+
 #### 线性基
 ```cpp
 //线性基模板
