@@ -210,6 +210,7 @@ auto init = [] {
 i64 comb(int n, int m) {
     return m < 0 || m > n ? 0 : F[n] * INV_F[m] % MOD * INV_F[n - m] % MOD;
 }
+```
 
 #### 卡特兰数
 $C_n = \frac{1}{n+1}\binom{2n}{n}$
@@ -261,7 +262,6 @@ auto init = [] {
     }
     return 0;
 }; //O(n)
-```
 ```
 
 #### lucas定理
