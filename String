@@ -1,0 +1,165 @@
+# 字符串
+#### kmp
+```cpp
+//kmp
+std::vector<int> get_pi(std::string s) {
+    int m = s.size();
+    std::vector<int> pi(m);
+    int cnt = 0;
+    for (int i = 1; i < m; i++) {
+        char b = s[i];
+        while (cnt && s[cnt] != b) cnt = pi[cnt - 1];
+        if (s[cnt] == b) cnt++;
+        pi[i] = cnt;
+    }
+    return pi;
+}
+```
+#### Z函数
+``` cpp
+//z函数
+std::vector<int> calc_z(const std::string& s) {
+    int n = s.size();
+    std::vector<int> z(n);
+    for (int i = 1, box_l = 0, box_r = 0; i < n; i++) {
+        if (i <= box_r) z[i] = std::min(z[i - box_l], box_r - i + 1);
+        while (i + z[i] < n && s[z[i]] == s[i + z[i]]) {
+            box_l = i, box_r = i + z[i];
+            z[i]++;
+        }
+    }
+    z[0] = n;
+    return z;
+}
+```
+
+#### Manachar
+``` cpp
+//Manachar
+vector<int> LongestPalindrome {
+    string t = "^";
+    for (char c : s) {
+        t += '#';
+        t += c;
+    }
+    t += "#$";
+    vector<int> half_len(t.length() - 2);
+    half_len[1] = 1;
+    int box_m = 0, box_r = 0;
+    for (int i = 2; i < half_len.size(); i++) {
+        int hl = 1;
+        if (i < box_r) hl = min(half_len[box_m * 2 - i], box_r - i);
+            
+        while (t[i - hl] == t[i + hl]) {
+            hl++;
+            box_m = i, box_r = i + hl;
+        }
+
+        half_len[i] = hl;    
+    }
+    return half_len;
+}
+```
+
+#### 字符串哈希
+``` cpp
+//字符串哈希
+std::mt19937 rng(std::chrono::steady_clock::now().time_since_epoch().count());
+const int BASE1 = std::uniform_int_distribution<>(8e8, 9e8)(rng);
+const int BASE2 = std::uniform_int_distribution<>(8e8, 9e8)(rng);
+static constexpr int MOD1 = 1'070'777'777;
+static constexpr int MOD2 = 1'000'000'007;
+
+void solve() {
+    unordered_set<i64> st;
+    auto str_hash = [&](const vector<string>& s) -> vector<i32> {
+        int n = s.size();
+        vector<i64> s_hash(n);
+        for (int i = 0; i < n; i++) {
+            i64 h1 = 0, h2 = 0;
+            for (char c : s[i]) {
+                h1 = (h1 * BASE1 + c) % MOD1;
+                h2 = (h2 * BASE2 + c) % MOD2;
+            }
+            i64 h = (h1 << 32) | h2;
+            s_hash[i] = h;
+            st.insert(h);
+        }
+        return s_hash;
+    }
+}
+```
+
+#### 最小表达式
+``` cpp
+//最小表达式
+string smallestRepresentation(string s) {
+    int n = s.size();
+    s += s;
+    int i = 0, j = 1; 
+    while (j < n) {
+        int k = 0;
+        while (k < n && s[i + k] == s[j + k]) k++;
+        if (k >= n) break;
+        
+        if (s[i + k] < s[j + k]) j += k + 1;
+        else auto [i, j] = make_pair(j, max(j, i + k) + 1);
+    }
+    return s.substr(i, n);
+}
+```
+
+#### AC自动机
+``` cpp
+//AC自动机
+struct Node {
+    Node* son[26]{};
+    Node* fail; //失配节点类似于kmp的pi
+    Node* last; //指向模式串结尾
+    int len = 0; 
+};
+
+struct AhoCorasick {
+    Node* root = new Node();
+
+    void put(std::string& s) {
+        auto cur = root;
+        for (char b : s) {
+            b -= 'a';
+            if (cur->son[b] == nullptr)
+                cur->son[b] = new Node();
+            cur = cur->son[b];
+        }
+        cur->len = s.length();
+    }
+
+    void build_fail() {
+        root->fail = root->last = root;
+        std::queue<Node*> q;
+        for (auto& son : root->son) { //第一层的所有节点的失配节点都是根
+            if (son == nullptr) {
+                son = root;
+            } else {
+                son->fail = son->last = root;
+                q.push(son);
+            }
+        }
+
+        while (!q.empty()) {
+            auto cur = q.front();
+            q.pop();
+            for (int i = 0; i < 26; i++) {
+                auto& son = cur->son[i];
+                if (son == nullptr) {
+                    son = cur->fail->son[i];
+                    continue;
+                }
+                son->fail = cur->fail->son[i]; //儿子的失配节点就是我的失配节点的儿子
+                son->last = son->fail->len ? son->fail : son->fail->last;
+                //如果儿子是终点节点则儿子的last节点指向儿子的fail(回退一格)
+                q.push(son);
+            }
+        }
+    }
+};
+```
