@@ -27,3 +27,53 @@ Matrix pow_mul(Matrix a, i64 n, Matrix& f0) {
     return res;
 }
 ```
+
+#### 换根DP (前后缀分解)
+```cpp
+    using data = i64;
+    const data unit = 0;
+    auto moveEdge = [&](data d, int u, int v, bool swap) -> data { // 换根逻辑
+        return d + k;
+    };
+    auto merge = [&](data p, data q) -> data { // 合并逻辑
+        return std::max(p, q);
+    };
+
+    std::vector<data> subData(n); //只算子树的每个点的价值
+    auto dfs = [&](this auto&& dfs, int u, int fa) -> void {
+        data res = unit;
+        for (int v : g[u]) {
+            if (v == fa) continue;
+            dfs(v, u);
+            res = merge(res, moveEdge(subData[v], u, v, false));
+        }
+        subData[u] = res;
+    };
+    dfs(0, -1);
+
+    std::vector<data> ansAtRoot(n); //最后每个点的答案
+    auto reroot = [&](this auto&& reroot, int u, int fa, data movedFaData) -> void {
+        ansAtRoot[u] = merge(movedFaData, subData[u]); // 首先更新答案
+
+        int m = g[u].size();
+        std::vector<data> suf(m + 1); // 所有边的价值
+        suf[m] = unit;
+        for (int i = m - 1; i >= 0; i--) {
+            int v = g[u][i];
+            if (v != fa) {
+                suf[i] = merge(suf[i + 1], moveEdge(subData[v], u, v, false)); // 求后缀
+            } else {
+                suf[i] = suf[i + 1]; //是父节点不用管直接跳过
+            }
+        }
+
+        data pre = unit;
+        for (int i = 0; i < m; i++) {
+            int v = g[u][i];
+            if (v == fa) continue;
+            data mergedData = merge(movedFaData, merge(pre, suf[i + 1])); // 看v右兄弟的值
+            reroot(v, u, moveEdge(mergedData, v, u, true)); // 递归下一层
+            pre = merge(pre, moveEdge(subData[v], u, v, false)); // 把v加上去
+        }
+    };
+```
