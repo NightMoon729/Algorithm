@@ -1,0 +1,88 @@
+# 图论
+#### 拓扑排序
+``` cpp
+std::vector<int> topologicalSort(int n, std::vector<std::vector<int>>& edges) {
+    std::vector<std::vector<int>> g(n);
+    std::vector<int> in_deg(n);
+    for (auto& e : edges) {
+        int x = e[0], y = e[1];
+        g[x].push_back(y);
+        in_deg[y]++; // 统计 y 的先修课数量
+    }
+
+    std::queue<int> q;
+    for (int i = 0; i < n; i++) {
+        if (in_deg[i] == 0)  // 没有先修课，可以直接上
+            q.push(i); // 加入学习队列
+    }
+
+    std::vector<int> topo_order;
+    while (!q.empty()) {
+        int x = q.front();
+        q.pop();
+        topo_order.push_back(x);
+        for (int y : g[x]) {
+            in_deg[y]--; 
+            if (in_deg[y] == 0) q.push(y); // 全部上完加入队列
+        }
+    }
+    if (topo_order.size() < n) return {}; // 图中有环
+    return topo_order;
+}
+```
+
+#### dijkstra
+``` cpp 
+std::vector<i64> shortestPathDijkstra(int n, std::vector<std::vector<int>>& edges, int start) {
+    std::vector<std::vector<std::pair<int, int>>> g(n); // 邻接表
+    for (auto& e : edges) {
+        int x = e[0], y = e[1], wt = e[2];
+        g[x].emplace_back(y, wt);
+        // g[y].emplace_back(x, wt); // 无向图加上这行
+    }
+
+    std::vector<i64> dis(n, LLONG_MAX);
+    // 堆中保存 (起点到节点 x 的最短路长度，节点 x)
+    std::priority_queue<std::pair<i64, int>, std::vector<std::pair<i64, int>>, std::greater<>> pq;
+    dis[start] = 0; // 起点到自己的距离是 0
+    pq.emplace(0, start);
+    while (!pq.empty()) {
+        auto [dis_x, x] = pq.top();
+        pq.pop();
+        if (dis_x > dis[x]) continue;
+        for (auto& [y, wt] : g[x]) {
+            auto new_dis_y = dis_x + wt;
+            if (new_dis_y < dis[y]) {
+                dis[y] = new_dis_y; // 更新 x 的邻居的最短路
+                pq.emplace(new_dis_y, y);
+            }
+        }
+    }
+    return dis;
+}
+```
+
+#### 最小生成树
+``` cpp
+int mstKruskal(int n, std::vector<std::array<int,3>>& edges) {
+    std::ranges::sort(edges, [](const auto &a, const auto &b) {
+        return a[2] < b[2];
+    });
+    std::vector<int> fa(n);
+    std::ranges::iota(fa, 0);
+    auto find = [&](this auto&& find, int x) -> int {
+        return fa[x] == x ? x : fa[x] = find(fa[x]);
+    };
+    int sum = 0, cntE = 0;
+    for (auto [u, v, w]: edges) {
+        int fu = find(u), fv = find(v);
+        if (fu != fv) {
+            fa[fu] = fv;
+            sum += w;
+            cntE++;
+        }
+    }
+    if (cntE < n - 1) return -1;
+    return sum;
+}
+```
