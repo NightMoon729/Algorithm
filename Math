@@ -150,6 +150,16 @@ i64 exPhiBigPow(std::string a, std::string b, int m) { //超大指数情形
 } // O(sqrt(m) + |b|)
 ```
 
+#### 整除分块
+``` cpp
+for (i64 l = 0; l <= n; ) {
+    i64 q = n / l; 
+    i64 r = std::min(R, n / q); // n / l == n / r
+    // 写答案更新逻辑
+    l = r + 1; 
+} // O(sqrt(n))
+```
+
 #### 大步小步算法
 ```cpp
 //BSGS
