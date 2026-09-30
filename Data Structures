@@ -342,3 +342,64 @@ public:
     }
 };
 ```
+
+# 回滚莫队
+``` cpp
+std::vector<int> moWithRollback(const std::vector<int>& a,const std::vector<std::vector<int>>& queries) {
+    int n = a.size(), m = queries.size();
+    std::vector<int> cnt(n + 1);
+    int sum = 0;
+    auto add = [&](int x) { // 追加元素x
+        cnt[x]++;
+        // ...
+    };
+
+    auto getAns = [&]() {
+        // ...
+        return sum;
+    };
+
+    std::vector<int> ans(m);
+    int blockSize = std::ceil(n / std::sqrt(m));
+    struct Query {
+        int bid, l, r, qid;
+    };
+
+    std::vector<Query> qs;
+    for (int i = 0; i < m; i++) {
+        int l = queries[i][0], r = queries[i][1];
+        r++;
+
+        if (r - l > blockSize) { // 大区间离线算
+            qs.emplace_back(l / blockSize, l, r, i);
+            continue;
+        }
+        for (int j = l; j < r; j++) add(j); // 小范围直接暴力
+        ans[i] = getAns();
+        for (int j = l; j < r; j++) cnt[a[j]] = 0; // 重置数据
+        sum = 0;
+    }
+    std::ranges::sort(qs, {}, [](auto &q) { return std::pair(q.bid, q.r); }); //先根据块排序，在根据r
+
+    int l = 0, r = 0;
+    for (int i = 0; i < qs.size(); i++) {
+        auto &q = qs[i];
+        int l0 = (q.bid + 1) * blockSize;
+        if (i == 0 || q.bid > qs[i - 1].bid) {
+            l = r = l0;
+            std::ranges::fill(cnt, 0);
+            sum = 0;
+        }
+        for (; r < q.r; r++) add(r); // 右端点从 r 移动到 q.r（q.r 不计入）
+        int tmp = sum;
+        for (; l > q.l; l--) add(l - 1); // 左端点从 l0 移动到 q.l（l0 不计入）
+        ans[q.qid] = getAns();
+        sum = tmp;
+        for (; l < l0; l++) { // 回滚
+            int v = a[l];
+            cnt[v]--;
+        }
+    }
+    return ans;
+}
+```
