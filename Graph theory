@@ -86,3 +86,21 @@ int mstKruskal(int n, std::vector<std::array<int,3>>& edges) {
     return sum;
 }
 ```
+
+#### 二分图染色
+``` cpp
+bool isBipartite(std::vector<std::vector<int>>& graph) {
+    std::vector<int8_t> colors(graph.size());
+    auto dfs = [&](this auto&& dfs, int x, int8_t c) -> bool {
+        colors[x] = c; // 节点 x 染成颜色 c
+        for (int y : graph[x]) 
+            if (colors[y] == c || colors[y] == 0 && !dfs(y, -c)) return false; 
+        return true;
+    };
+
+        // 可能有多个连通块
+        for (int i = 0; i < colors.size(); i++) 
+            if (colors[i] == 0 && !dfs(i, 1)) return false; 
+        return true;
+}
+```
