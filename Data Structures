@@ -6,17 +6,17 @@ class NumMatrix {
     Matrix sum;
 public:
     NumMatrix(Matrix& mat) {
-        i32 m = mat.size(), n = mat[0].size();
+        int m = mat.size(), n = mat[0].size();
         sum.resize(m + 1, vector<i32>(n + 1));
-        for (i32 i = 0; i < m; i++) {
-            for (i32 j = 0; j < n; j++) {
+        for (int i = 0; i < m; i++) {
+            for (int j = 0; j < n; j++) {
                 sum[i + 1][j + 1] = sum[i + 1][j] + sum[i][j + 1] - sum[i][j] + mat[i][j];
             }
         }
     }
 
     // 返回左上角在 (r1, c1)，右下角在 (r2, c2) 的子矩阵元素和
-    i32 sumRegion(i32 r1, i32 c1, i32 r2, i32 c2) {
+    int sumRegion(int r1, int c1, int r2, int c2) {
         return sum[r2 + 1][c2 + 1] - sum[r2 + 1][c1] - sum[r1][c2 + 1] + sum[r1][c1];
     }
 };
@@ -28,10 +28,8 @@ public:
 class UnionFind {
     std::vector<int> fa;
     std::vector<int> sz;
-
-public:
     int cc;
-
+public:
     UnionFind(int n) : fa(n), sz(n, 1), cc(n) {
         std::ranges::iota(fa, 0);
     }
@@ -41,10 +39,6 @@ public:
         return fa[x];
     }
 
-    bool is_same(int x, int y) {
-        return find(x) == find(y);
-    }
-
     bool merge(int from, int to) {
         int x = find(from), y = find(to);
         if (x == y) return false;
@@ -52,10 +46,6 @@ public:
         sz[y] += sz[x];
         cc--;
         return true;
-    }
-
-    int get_size(int x) {
-        return sz[find(x)];
     }
 };
 ```
@@ -345,60 +335,64 @@ public:
 
 # 回滚莫队
 ``` cpp
-std::vector<int> moWithRollback(const std::vector<int>& a,const std::vector<std::vector<int>>& queries) {
+std::vector<std::array<i64, 2>> moWithRollback(std::vector<int> a, std::vector<std::array<int, 2>> queries) {
     int n = a.size(), m = queries.size();
     std::vector<int> cnt(n + 1);
-    int sum = 0;
-    auto add = [&](int x) { // 追加元素x
-        cnt[x]++;
-        // ...
+    i64 sum = 0, c = 0;
+    auto add = [&](int i, int op) -> void { // 添加函数(根据题目修改)
+        int k = a[i];
+        auto& v = cnt[k];
+        c -= 1LL * (v - 1) * v / 2;
+        v += op ? 1 : -1;
+        c += 1LL * (v - 1) * v / 2;
+    };
+    auto getAns = [&]() -> std::array<i64, 2> { // 获取答案函数(同上)
+        if (sum == 0) return {1, 0};
+        i64 g = std::gcd(sum, c);
+        return {sum / g, c / g};
     };
 
-    auto getAns = [&]() {
-        // ...
-        return sum;
-    };
-
-    std::vector<int> ans(m);
+    std::vector<std::array<i64, 2>> ans(m);
     int blockSize = std::ceil(n / std::sqrt(m));
-    struct Query {
+    struct query {
         int bid, l, r, qid;
     };
-
-    std::vector<Query> qs;
+    std::vector<query> qs;
     for (int i = 0; i < m; i++) {
-        int l = queries[i][0], r = queries[i][1];
-        r++;
-
-        if (r - l > blockSize) { // 大区间离线算
+        int l = queries[i][0], r = queries[i][1] + 1;
+        if (r - l > blockSize) { // 大区间离线
             qs.emplace_back(l / blockSize, l, r, i);
             continue;
         }
-        for (int j = l; j < r; j++) add(j); // 小范围直接暴力
+        sum = 1LL * (r - l - 1) * (r - l) / 2;
+        for (int j = l; j < r; j++) add(j, 1); // 小区间暴力
         ans[i] = getAns();
-        for (int j = l; j < r; j++) cnt[a[j]] = 0; // 重置数据
-        sum = 0;
+        for (int j = l; j < r; j++) cnt[a[j]] = 0; // 重置数据 ...
+        sum = 0, c = 0;
     }
-    std::ranges::sort(qs, {}, [](auto &q) { return std::pair(q.bid, q.r); }); //先根据块排序，在根据r
+
+    std::ranges::sort(qs, [](query a, query b) {
+        if (a.bid != b.bid) return a.bid < b.bid;
+        return a.r < b.r;
+    });
 
     int l = 0, r = 0;
     for (int i = 0; i < qs.size(); i++) {
-        auto &q = qs[i];
-        int l0 = (q.bid + 1) * blockSize;
+        auto q = qs[i];
+        int l0 = std::min((q.bid + 1) * blockSize, n);
         if (i == 0 || q.bid > qs[i - 1].bid) {
-            l = r = l0;
-            std::ranges::fill(cnt, 0);
-            sum = 0;
+            l = l0, r = l0;
+            std::ranges::fill(cnt, 0); // 重置数据 ...
+            sum = 0, c = 0;
         }
-        for (; r < q.r; r++) add(r); // 右端点从 r 移动到 q.r（q.r 不计入）
-        int tmp = sum;
-        for (; l > q.l; l--) add(l - 1); // 左端点从 l0 移动到 q.l（l0 不计入）
+        for (; r < q.r; r++) add(r, 1); // 右端点只往右
+        for (; l > q.l; ) {
+            --l;
+            add(l, 1);
+        }
+        sum = 1LL * (q.r - q.l) * (q.r - q.l - 1) / 2;
         ans[q.qid] = getAns();
-        sum = tmp;
-        for (; l < l0; l++) { // 回滚
-            int v = a[l];
-            cnt[v]--;
-        }
+        for (; l < l0; l++) add(l, 0); // 回滚，始终保持 l 在 l0 的位置
     }
     return ans;
 }
