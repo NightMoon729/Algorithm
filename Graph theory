@@ -28,7 +28,7 @@ std::vector<int> topologicalSort(int n, std::vector<std::vector<int>>& edges) {
     }
     if (topo_order.size() < n) return {}; // 图中有环
     return topo_order;
-}
+} // O(n)
 ```
 
 #### dijkstra
@@ -59,10 +59,10 @@ std::vector<i64> shortestPathDijkstra(int n, std::vector<std::vector<int>>& edge
         }
     }
     return dis;
-}
+} // O(mlogm)
 ```
 
-#### 最小生成树
+#### 最小生成树 (kruskal算法)
 ``` cpp
 int mstKruskal(int n, std::vector<std::array<int,3>>& edges) {
     std::ranges::sort(edges, [](const auto &a, const auto &b) {
@@ -84,7 +84,7 @@ int mstKruskal(int n, std::vector<std::array<int,3>>& edges) {
     }
     if (cntE < n - 1) return -1;
     return sum;
-}
+} // O(mlogm)
 ```
 
 #### 二分图染色
@@ -98,9 +98,9 @@ bool isBipartite(std::vector<std::vector<int>>& graph) {
         return true;
     };
 
-        // 可能有多个连通块
-        for (int i = 0; i < colors.size(); i++) 
-            if (colors[i] == 0 && !dfs(i, 1)) return false; 
-        return true;
+    // 可能有多个连通块
+    for (int i = 0; i < colors.size(); i++) 
+       if (colors[i] == 0 && !dfs(i, 1)) return false; 
+    return true;
 }
 ```
