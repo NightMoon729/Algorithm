@@ -6,18 +6,78 @@ class NumMatrix {
     Matrix sum;
 public:
     NumMatrix(Matrix& mat) {
-        int m = mat.size(), n = mat[0].size();
+        i32 m = mat.size(), n = mat[0].size();
         sum.resize(m + 1, vector<i32>(n + 1));
-        for (int i = 0; i < m; i++) {
-            for (int j = 0; j < n; j++) {
+        for (i32 i = 0; i < m; i++) {
+            for (i32 j = 0; j < n; j++) {
                 sum[i + 1][j + 1] = sum[i + 1][j] + sum[i][j + 1] - sum[i][j] + mat[i][j];
             }
         }
     }
 
     // 返回左上角在 (r1, c1)，右下角在 (r2, c2) 的子矩阵元素和
-    int sumRegion(int r1, int c1, int r2, int c2) {
+    i32 sumRegion(i32 r1, i32 c1, i32 r2, i32 c2) {
         return sum[r2 + 1][c2 + 1] - sum[r2 + 1][c1] - sum[r1][c2 + 1] + sum[r1][c1];
+    }
+};
+```
+
+#### 字典树
+``` cpp
+struct Node {
+    Node* son[26]{};
+    bool end = false;
+};
+
+class Trie {
+    Node* root = new Node();
+
+    int find(string word) {
+        Node* cur = root;
+        for (char c : word) {
+            c -= 'a';
+            if (cur->son[c] == nullptr) { // 道不同，不相为谋
+                return 0;
+            }
+            cur = cur->son[c];
+        }
+        // 走过同样的路（2=完全匹配，1=前缀匹配）
+        return cur->end ? 2 : 1;
+    }
+
+    void destroy(Node* node) {
+        if (node == nullptr) {
+            return;
+        }
+        for (Node* son : node->son) {
+            destroy(son);
+        }
+        delete node;
+    }
+
+public:
+    ~Trie() {
+        destroy(root);
+    }
+
+    void insert(string word) {
+        Node* cur = root;
+        for (char c : word) {
+            c -= 'a';
+            if (cur->son[c] == nullptr) { // 无路可走？
+                cur->son[c] = new Node(); // new 出来！
+            }
+            cur = cur->son[c];
+        }
+        cur->end = true;
+    }
+
+    bool search(string word) {
+        return find(word) == 2;
+    }
+
+    bool startsWith(string prefix) {
+        return find(prefix) != 0;
     }
 };
 ```
@@ -28,8 +88,10 @@ public:
 class UnionFind {
     std::vector<int> fa;
     std::vector<int> sz;
-    int cc;
+
 public:
+    int cc;
+
     UnionFind(int n) : fa(n), sz(n, 1), cc(n) {
         std::ranges::iota(fa, 0);
     }
@@ -39,6 +101,10 @@ public:
         return fa[x];
     }
 
+    bool is_same(int x, int y) {
+        return find(x) == find(y);
+    }
+
     bool merge(int from, int to) {
         int x = find(from), y = find(to);
         if (x == y) return false;
@@ -46,6 +112,10 @@ public:
         sz[y] += sz[x];
         cc--;
         return true;
+    }
+
+    int get_size(int x) {
+        return sz[find(x)];
     }
 };
 ```
@@ -333,8 +403,9 @@ public:
 };
 ```
 
-# 回滚莫队
+#### 莫队
 ``` cpp
+// 回滚莫队
 std::vector<std::array<i64, 2>> moWithRollback(std::vector<int> a, std::vector<std::array<int, 2>> queries) {
     int n = a.size(), m = queries.size();
     std::vector<int> cnt(n + 1);
