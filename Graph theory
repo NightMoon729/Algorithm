@@ -135,20 +135,20 @@ std::pair<int, std::vector<int>> maxBipartiteMatchingHungarian(int nl, int nr, s
 #### 最大流(Dinic算法)
 ``` cpp
 struct Dinic {
-    struct Edge { int to, rid, cap, eid; };
+    struct Edge { i64 to, rid, cap; }; // 终点、反向边下标、剩余容量、原始边编号
     std::vector<std::vector<Edge>> g;
-    std::vector<int> dis, iter;
-    int st, ed;
+    std::vector<int> dis, iter; // 记录层数
+    int st, ed; // 源点 汇点
 
-    Dinic(int n, int st, int ed) : g(n), dis(n), iter(n), st(st), ed(ed) {}
+    Dinic(int n, int st, int ed) : g(n), dis(n), iter(n), st(st), ed(ed) {} // 初始化
 
     void addEdge(int u, int v, int cap, int eid = -1) {
-        g[u].push_back({v, (int)g[v].size(), cap, eid});
-        g[v].push_back({u, (int)g[u].size() - 1, 0, -1});
+        g[u].push_back({v, (int)g[v].size(), cap});
+        g[v].push_back({u, (int)g[u].size() - 1, 0});
     }
 
     bool bfs() {
-        std::fill(dis.begin(), dis.end(), 0);
+        std::ranges::fill(dis, 0);
         std::queue<int> q;
         q.push(st);
         dis[st] = 1;
@@ -156,7 +156,7 @@ struct Dinic {
             int u = q.front();
             q.pop();
             for (auto &e : g[u]) {
-                if (e.cap > 0 && !dis[e.to]) {
+                if (e.cap > 0 && !dis[e.to]) { // 如果容量大于0并且没被访问
                     dis[e.to] = dis[u] + 1;
                     q.push(e.to);
                 }
@@ -165,13 +165,13 @@ struct Dinic {
         return dis[ed] > 0;
     }
 
-    int dfs(int u, int flow) {
-        if (u == ed) return flow;
-        int res = 0;
-        for (; iter[u] < (int)g[u].size(); iter[u]++) {
+    i64 dfs(int u, int flow) {
+        if (u == ed) return flow; // 到达终点返回流量
+        i64 res = 0; // 记录发出的流量
+        for (; iter[u] < g[u].size(); iter[u]++) {
             auto &e = g[u][iter[u]];
-            if (e.cap <= 0 || dis[e.to] != dis[u] + 1) continue;
-            int f = dfs(e.to, std::min(flow - res, e.cap));
+            if (e.cap <= 0 || dis[e.to] != dis[u] + 1) continue; // 没有流量 or 层数不符合
+            int f = dfs(e.to, std::min(flow - res, e.cap)); // 访问下一个点
             if (!f) continue;
             e.cap -= f;
             g[e.to][e.rid].cap += f;
@@ -181,11 +181,11 @@ struct Dinic {
         return res;
     }
 
-    int maxFlow() {
-        int ans = 0;
+    i64 maxFlow() {
+        i64 ans = 0;
         while (bfs()) {
-            std::fill(iter.begin(), iter.end(), 0);
-            ans += dfs(st, INT_MAX);
+            std::ranges::fill(iter, 0);
+            ans += dfs(st, inf);
         }
         return ans;
     }
