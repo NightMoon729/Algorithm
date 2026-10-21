@@ -118,6 +118,43 @@ public:
         return sz[find(x)];
     }
 };
+
+// 边权并查集模板
+template<typename T>
+class UnionFind {
+public:
+    std::vector<int> fa;
+    std::vector<T> dis;
+    UnionFind(int n) : fa(n), dis(n) {
+        rgs::iota(fa, 0);
+    }
+
+    int find(int x) {
+        if (fa[x] != x) {
+            int root = find(fa[x]);
+            dis[x] += dis[fa[x]]; // 更新路径
+            fa[x] = root; // 更新元节点
+        }
+        return fa[x];
+    }
+
+    T get_relative_distance(int from, int to) {
+        find(from);
+        find(to);
+        return dis[from] - dis[to];
+    }
+
+    bool merge(int from, int to, T value) {
+        int x = find(from), y = find(to);
+        if (x == y) return dis[from] - dis[to] == value;
+        // 已知 x-from = dis[from] 和 y-to = dis[to]，现在合并 from 和 to，新增信息 to-from = value
+        // 由于 y-from = (y-x) + (x-from) = (y-to) + (to-from)
+        // 所以 y-x = (to-from) + (y-to) - (x-from) = value + dis[to] - dis[from]
+        dis[x] = value + dis[to] - dis[from];
+        fa[x] = y;
+        return true;
+    }
+};
 ```
 
 #### 树状数组
