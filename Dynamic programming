@@ -1,9 +1,37 @@
 # 动态规划
+## 背包
+#### 多重背包
+``` cpp
+i64 boundedKnapsack(const std::vector<int>& num, const std::vector<int>& w, const std::vector<int>& v, int maxW) { // num是最多能做几个，w是代价，v是价值，maxW是最大可接受代价
+    int n = num.size();
+    std::vector f(n + 1, std::vector<i64>(maxW + 1, 0));
+    for (int i = 0; i < n; i++) // 第i个物品
+        for (int j = 0; j <= maxW; j++) // 枚举容量
+            for (int k = 0; k <= num[i] && k * w[i] <= j; k++) // 枚举选了 k = 0, 1, 2, ... num 个第 i 种物品
+                f[i + 1][j] = std::max(f[i + 1][j], f[i][j - k * w[i]] + 1LL * k * v[i]);
+    return f[n][maxW];
+} // O(n * maxW * sum(num))
+
+// 二进制枚举优化多重背包
+i64 boundedKnapsack(std::vector<int> num, std::vector<int>& w, std::vector<int>& v, int maxW) {
+    std::vector<i64> f(maxW + 1, 0); // 求最小就 std::ranges::fill(f, INF)
+    for (int i = 0; i < num.size(); i++) {
+        for (int p = 1; num[i] > 0; p *= 2) {
+            int k = std::min(p, num[i]);
+            for (int j = maxW; j >= w[i] * k; j--)
+                f[j] = std::max(f[j], f[j - w[i] * k] + 1LL * v[i] * k);
+            num[i] -= k;
+        }
+    }
+    return f[maxW];
+}
+```
+
 #### 矩阵快速幂
 ``` cpp
 //矩阵快速幂模板
 static constexpr int SIZE = 2;
-using Matrix = std::array<std::array<i32, SIZE>, SIZE>;
+using Matrix = std::array<std::array<int, SIZE>, SIZE>;
 Matrix mul(Matrix& a, Matrix& b) { // 矩阵乘法
     Matrix c{};
     for (int i = 0; i < SIZE; i++) {
