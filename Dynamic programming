@@ -82,29 +82,30 @@ Matrix pow_mul(Matrix a, i64 n) {
 
 #### 数位DP
 ``` cpp
-    std::vector memo(n, vector<long long>(target + 1, -1));
-    auto dfs = [&](this auto&& dfs, int i, int cnt0, bool limit_low, bool limit_high) -> i64 {
-        if (cnt0 > target) return 0; // 不合法
-        if (i == n) return cnt0 == target;
-        if (!limit_low && !limit_high && memo[i][cnt0] >= 0) return memo[i][cnt0];       
+i64 digitDP(i64 low, i64 high, i64 target) {
+    std::string low_s = std::format("{:b}", low), high_s = std::format("{:b}", high);
+    int n = high_s.size();
+    int diff_lh = n - low_s.size();
+    std::vector memo(n, std::vector<i64>(target + 1, -1));
+    auto dfs = [&](this auto&& dfs, int i, int cnt, bool limit_low, bool limit_high) -> i64 {
+        if (cnt > target) return 0; // 不合法
+        if (i == n) return cnt == target;
+        if (!limit_low && !limit_high && memo[i][cnt] >= 0) return memo[i][cnt];
         int lo = limit_low && i >= diff_lh ? low_s[i - diff_lh] - '0' : 0;
-        int hi = limit_high ? high_s[i] - '0' : 9;
+        int hi = limit_high ? high_s[i] - '0' : 1;
         i64 res = 0;
         int d = lo;
-        // 通过 limit_low 和 i 可以判断能否不填数字，dfs 无需 is_num 参数
-        // 如果前导零不影响答案，去掉这个 if block
-        if (limit_low && i < diff_lh) { // 不填数字，上界不受约束
+        if (limit_low && i < diff_lh) { // 如果下界有限制
             res = dfs(i + 1, 0, true, false);
-            d = 1; // 下面填数字，从 1 开始填
+            d = 1;
         }
-        // bool is_num = !limit_low || i > diff_lh;
-        for (; d <= hi; d++) {
-            res += dfs(i + 1, cnt0 + (d == 0), limit_low && d == lo, limit_high && d == hi); // 统计 0 的个数
-            // res %= MOD;
-        }
-        if (!limit_low && !limit_high) memo[i][cnt0] = res;
+        for (; d <= hi; d++) // 从d枚举到i
+            res += dfs(i + 1, cnt + (d == 1), limit_low && d == lo, limit_high && d == hi);
+        if (!limit_low && !limit_high) memo[i][cnt] = res;
         return res;
     };
+    return dfs(0, 0, true, true);
+}
 ```
 
 
