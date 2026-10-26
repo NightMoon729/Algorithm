@@ -14,9 +14,9 @@ i64 boundedKnapsack(const std::vector<int>& num, const std::vector<int>& w, cons
 
 // 二进制枚举优化多重背包
 i64 boundedKnapsack(std::vector<int> num, std::vector<int>& w, std::vector<int>& v, int maxW) {
-    std::vector<i64> f(maxW + 1, 0); // 求最小就 std::ranges::fill(f, INF)
+    std::vector<i64> f(maxW + 1, 0);
     for (int i = 0; i < num.size(); i++) {
-        for (int p = 1; num[i] > 0; p *= 2) {
+        for (int p = 1; num[i] > 0; p *= 2) { // 由于二进制枚举能构成所有数所以可以优化这一维
             int k = std::min(p, num[i]);
             for (int j = maxW; j >= w[i] * k; j--)
                 f[j] = std::max(f[j], f[j - w[i] * k] + 1LL * v[i] * k);
@@ -24,14 +24,14 @@ i64 boundedKnapsack(std::vector<int> num, std::vector<int>& w, std::vector<int>&
         }
     }
     return f[maxW];
-}
+} // O(n * maxW * log(sum(num)))
 ```
 
 #### 矩阵快速幂
 ``` cpp
 //矩阵快速幂模板
 static constexpr int SIZE = 2;
-using Matrix = std::array<std::array<int, SIZE>, SIZE>;
+using Matrix = std::array<std::array<int , SIZE>, SIZE>;
 Matrix mul(Matrix& a, Matrix& b) { // 矩阵乘法
     Matrix c{};
     for (int i = 0; i < SIZE; i++) {
@@ -60,18 +60,17 @@ Matrix pow_mul(Matrix a, i64 n) {
 
 #### 换根DP (前后缀分解)
 ```cpp
-    using data = i64;
-    const data unit = 0;
-    auto moveEdge = [&](data d, int u, int v, bool swap) -> data { // 换根逻辑
+    const i64 unit = 0;
+    auto moveEdge = [&](i64 d, int u, int v, bool swap) -> data { // 换根逻辑
         return d + k;
     };
-    auto merge = [&](data p, data q) -> data { // 合并逻辑
+    auto merge = [&](i64 p, i64 q) -> data { // 合并逻辑
         return std::max(p, q);
     };
 
-    std::vector<data> subData(n); //只算子树的每个点的价值
+    std::vector<i64> subData(n); //只算子树的每个点的价值
     auto dfs = [&](this auto&& dfs, int u, int fa) -> void {
-        data res = unit;
+        i64 res = unit;
         for (int v : g[u]) {
             if (v == fa) continue;
             dfs(v, u);
@@ -81,12 +80,12 @@ Matrix pow_mul(Matrix a, i64 n) {
     };
     dfs(0, -1);
 
-    std::vector<data> ansAtRoot(n); //最后每个点的答案
-    auto reroot = [&](this auto&& reroot, int u, int fa, data movedFaData) -> void {
+    std::vector<i64> ansAtRoot(n); //最后每个点的答案
+    auto reroot = [&](this auto&& reroot, int u, int fa, i64 movedFaData) -> void {
         ansAtRoot[u] = merge(movedFaData, subData[u]); // 首先更新答案
 
         int m = g[u].size();
-        std::vector<data> suf(m + 1); // 所有边的价值
+        std::vector<i64> suf(m + 1); // 所有边的价值
         suf[m] = unit;
         for (int i = m - 1; i >= 0; i--) {
             int v = g[u][i];
@@ -97,11 +96,11 @@ Matrix pow_mul(Matrix a, i64 n) {
             }
         }
 
-        data pre = unit;
+        i64 pre = unit;
         for (int i = 0; i < m; i++) {
             int v = g[u][i];
             if (v == fa) continue;
-            data mergedData = merge(movedFaData, merge(pre, suf[i + 1])); // 看v右兄弟的值
+            i64 mergedData = merge(movedFaData, merge(pre, suf[i + 1])); // 看v右兄弟的值
             reroot(v, u, moveEdge(mergedData, v, u, true)); // 递归下一层
             pre = merge(pre, moveEdge(subData[v], u, v, false)); // 把v加上去
         }
