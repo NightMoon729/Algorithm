@@ -503,5 +503,5 @@ std::vector<std::array<i64, 2>> moWithRollback(std::vector<int> a, std::vector<s
         for (; l < l0; l++) add(l, 0); // 回滚，始终保持 l 在 l0 的位置
     }
     return ans;
-}
+} // O(nsqrt(n))
 ```
