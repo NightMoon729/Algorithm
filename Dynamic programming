@@ -37,7 +37,26 @@ i64 boundedKnapsack(std::vector<int>& stocks, std::vector<int>& values, std::vec
 } // O(n * maxW)
 ```
 
-#### 分组背包
+#### 树上背包
+``` cpp
+// 有依赖
+int treeKnapsackWeighted(std::vector<std::vector<int>>& g, std::vector<std::pair<int,int>>& items, int root, int maxW) {
+    auto dfs = [&](this auto&& dfs, int v, int fa, std::vector<int>& preF) -> std::vector<int> {
+        std::vector<int> f = preF;
+        std::vector<int> preFCur = preF;
+        for (int w : g[v])
+            if (w != fa)  preFCur = dfs(w, v, preFCur);
+        auto [value, weight] = items[v];
+        for (int j = maxW; j >= weight; --j)
+            f[j] = std::max(f[j], preFCur[j - weight] + value);
+        return f;
+    };
+    // maxW 至多
+    std::vector f0(maxW + 1, 0);
+    std::vector<int> f = dfs(root, -1, f0);
+    return f[maxW];
+} // O(n * m)
+```
 
 
 #### 矩阵快速幂
@@ -68,7 +87,7 @@ Matrix pow_mul(Matrix a, i64 n) {
         n >>= 1;
     }
     return res;
-}
+} // O(n ^ 3)
 ```
 
 #### 换根DP (前后缀分解)
@@ -118,6 +137,7 @@ Matrix pow_mul(Matrix a, i64 n) {
             pre = merge(pre, moveEdge(subData[v], u, v, false)); // 把v加上去
         }
     };
+    // O(n))
 ```
 
 #### 数位DP
@@ -145,7 +165,7 @@ i64 digitDP(i64 low, i64 high, i64 target) {
         return res;
     };
     return dfs(0, 0, true, true);
-}
+} // O(logn)
 ```
 
 
@@ -163,5 +183,5 @@ std::vector<int> sos_dp(std::vector<int>& a) {
         }
     }
     return f;
-}
+} // O(n * 2 ^ n)
 ```
