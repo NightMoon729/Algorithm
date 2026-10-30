@@ -40,20 +40,19 @@ i64 boundedKnapsack(std::vector<int>& stocks, std::vector<int>& values, std::vec
 #### 树上背包
 ``` cpp
 // 有依赖
-int treeKnapsackWeighted(std::vector<std::vector<int>>& g, std::vector<std::pair<int,int>>& items, int root, int maxW) {
-    auto dfs = [&](this auto&& dfs, int v, int fa, std::vector<int>& preF) -> std::vector<int> {
+int treeKnapsackWeighted(std::vector<std::vector<int>>& g, std::vector<std::vector<int>>& items, int root, int maxW) {
+    auto dfs = [&](this auto&& dfs, int u, int fa, std::vector<int>& preF) -> std::vector<int> {
         std::vector<int> f = preF;
         std::vector<int> preFCur = preF;
-        for (int w : g[v])
-            if (w != fa)  preFCur = dfs(w, v, preFCur);
-        auto [value, weight] = items[v];
+        for (int v : g[u])
+            if (v != fa) preFCur = dfs(v, u, preFCur);
+        auto value = items[fa][u], weight = (u == 0 ? 0 : 1);
         for (int j = maxW; j >= weight; --j)
-            f[j] = std::max(f[j], preFCur[j - weight] + value);
+            f[j] = std::max(f[j], preFCur[j - weight] + value); // j - weight保证的答案合法
         return f;
     };
-    // maxW 至多
     std::vector f0(maxW + 1, 0);
-    std::vector<int> f = dfs(root, -1, f0);
+    std::vector<int> f = dfs(root, root, f0);
     return f[maxW];
 } // O(n * m)
 ```
