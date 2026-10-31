@@ -39,14 +39,14 @@ i64 boundedKnapsack(std::vector<int>& stocks, std::vector<int>& values, std::vec
 
 #### 树上背包
 ``` cpp
-// 有依赖
-int treeKnapsackWeighted(std::vector<std::vector<int>>& g, std::vector<std::vector<int>>& items, int root, int maxW) {
+// 树上背包
+int treeKnapsackWeighted(std::vector<std::vector<int>>& g, std::vector<std::pair<int, int>>& items, int root, int maxW) {
     auto dfs = [&](this auto&& dfs, int u, int fa, std::vector<int>& preF) -> std::vector<int> {
         std::vector<int> f = preF;
-        std::vector<int> preFCur = preF;
+        std::vector<int> preFCur = preF; // 放到更新子树下面就是无依赖背包
         for (int v : g[u])
             if (v != fa) preFCur = dfs(v, u, preFCur);
-        auto value = items[fa][u], weight = (u == 0 ? 0 : 1);
+        auto [value, weight] = items[u];
         for (int j = maxW; j >= weight; --j)
             f[j] = std::max(f[j], preFCur[j - weight] + value); // j - weight保证的答案合法
         return f;
