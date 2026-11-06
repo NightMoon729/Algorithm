@@ -33,7 +33,7 @@ std::vector<int> topologicalSort(int n, std::vector<std::vector<int>>& edges) {
 
 #### dijkstra
 ``` cpp 
-std::vector<i64> Dijkstra(int n, std::vector<std::vector<int>>& edges, int start) {
+std::vector<i64> shortestPathDijkstra(int n, std::vector<std::vector<int>>& edges, int start) {
     std::vector<std::vector<std::pair<int, int>>> g(n); // 邻接表
     for (auto& e : edges) {
         int x = e[0], y = e[1], wt = e[2];
@@ -64,26 +64,17 @@ std::vector<i64> Dijkstra(int n, std::vector<std::vector<int>>& edges, int start
 
 #### 最小生成树 (kruskal算法)
 ``` cpp
-int mstKruskal(int n, std::vector<std::array<int,3>>& edges) {
-    std::ranges::sort(edges, [](const auto &a, const auto &b) {
-        return a[2] < b[2];
-    });
-    std::vector<int> fa(n);
-    std::ranges::iota(fa, 0);
-    auto find = [&](this auto&& find, int x) -> int {
-        return fa[x] == x ? x : fa[x] = find(fa[x]);
-    };
-    int sum = 0, cntE = 0;
-    for (auto [u, v, w]: edges) {
-        int fu = find(u), fv = find(v);
-        if (fu != fv) {
-            fa[fu] = fv;
-            sum += w;
-            cntE++;
+int mstKruskal(int n, std::vector<std::array<int, 3>>& edges) {
+    std::ranges::sort(edges, [](const auto& a, const auto& b) { return a[2] < b[2]; });
+    UnionFind<int> uf(n);
+    i64 sum = 0;
+    int cntE = 0;
+    for (auto [u, v, w] : edges)
+        if (!uf.is_same(u, v)) {
+            uf.merge(u, v, 0);
+            sum += w, cntE++;
         }
-    }
-    if (cntE < n - 1) return -1;
-    return sum;
+    return cntE < n - 1 ? -1 : sum;
 } // O(mlogm)
 ```
 
@@ -189,7 +180,7 @@ struct Dinic {
         }
         return ans;
     }
-}; // O(n^2m)
+};
 ```
 
 #### 最近公共祖先 (LCA)
