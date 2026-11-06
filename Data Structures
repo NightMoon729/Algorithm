@@ -177,6 +177,79 @@ public:
 
 #### 线段树
 ``` cpp
+// zkw线段树
+template<typename T>
+class SegmentTree {
+    int n;
+    int M;                      //叶子起始下标（>= n 的 2 的幂）
+    std::vector<T> tree;
+
+    T merge_val(const T& a, const T& b) const { //合并两个数
+        return std::max(a, b);
+    }
+
+    void maintain(int o) { //维护父亲节点
+        tree[o] = merge_val(tree[o * 2], tree[o * 2 + 1]);
+    }
+
+    //---------- 对内：传节点下标 ----------
+    void build(int o) { //自底向上建树，o 从 M-1 往下
+        for (; o >= 1; o--) maintain(o);
+    }
+
+    void pull_up(int o) { //从节点 o 一路维护到根
+        for (o >>= 1; o >= 1; o >>= 1) maintain(o);
+    }
+
+    T query_node(int l, int r) { //节点下标，半开区间 [l, r)
+        bool has_l = false, has_r = false;
+        T res_l{}, res_r{};
+        for (; l < r; l >>= 1, r >>= 1) {
+            if (l & 1) {
+                res_l = has_l ? merge_val(res_l, tree[l]) : tree[l];
+                has_l = true;
+                l++;
+            }
+            if (r & 1) {
+                r--;
+                res_r = has_r ? merge_val(tree[r], res_r) : tree[r];
+                has_r = true;
+            }
+        }
+        if (!has_l) return res_r;
+        if (!has_r) return res_l;
+        return merge_val(res_l, res_r);
+    }
+public:
+    SegmentTree(int n, T init_val = 0) : SegmentTree(std::vector<T>(n, init_val)) {}
+
+    SegmentTree(const std::vector<T>& a)
+        : n(a.size()),
+          M(1 << std::bit_width(a.size() - 1)),
+          tree(2 << std::bit_width(a.size() - 1)) {
+        for (int i = 0; i < n; i++) tree[M + i] = a[i];
+        build(M - 1);
+    }
+
+    //---------- 对外：传数组下标 ----------
+    void set(int i, T v) { //单点赋值
+        tree[M + i] = v;
+        pull_up(M + i);
+    }
+
+    void add(int i, T v) { //单点加（仅当 merge_val 是加法）
+        tree[M + i] += v;
+        pull_up(M + i);
+    }
+
+    T get(int i) const { return tree[M + i]; }
+
+    T query(int L, int R) { //闭区间 [L, R]
+        return query_node(L + M, R + M + 1);
+    }
+};
+
+
 //lazy线段树
 template<typename T, typename F>
 class LazySegmentTree {
