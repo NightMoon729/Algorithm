@@ -6,17 +6,17 @@ class NumMatrix {
     Matrix sum;
 public:
     NumMatrix(Matrix& mat) {
-        int m = mat.size(), n = mat[0].size();
-        sum.resize(m + 1, vector<int>(n + 1));
-        for (int i = 0; i < m; i++) {
-            for (int j = 0; j < n; j++) {
+        i32 m = mat.size(), n = mat[0].size();
+        sum.resize(m + 1, vector<i32>(n + 1));
+        for (i32 i = 0; i < m; i++) {
+            for (i32 j = 0; j < n; j++) {
                 sum[i + 1][j + 1] = sum[i + 1][j] + sum[i][j + 1] - sum[i][j] + mat[i][j];
             }
         }
     }
 
     // 返回左上角在 (r1, c1)，右下角在 (r2, c2) 的子矩阵元素和
-    i32 sumRegion(int r1, int c1, int r2, int c2) {
+    i32 sumRegion(i32 r1, i32 c1, i32 r2, i32 c2) {
         return sum[r2 + 1][c2 + 1] - sum[r2 + 1][c1] - sum[r1][c2 + 1] + sum[r1][c1];
     }
 };
@@ -84,6 +84,35 @@ public:
 
 #### 并查集
 ```cpp
+//普通并查集模板
+class UnionFind {
+    std::vector<int> fa;
+public:
+    UnionFind(int n) : fa(n) {
+        rgs::iota(fa, 0);
+    }
+
+    int find(int x) {
+        int rt = x;
+        while (fa[rt] != rt) rt = fa[rt];
+        while (fa[x] != rt) {
+            int nxt = fa[x];
+            fa[x] = rt;
+            x = nxt;
+        }
+        return rt;
+    }
+
+    bool is_same(int x, int y) { return find(x) == find(y); }
+
+    bool merge(int from, int to) {
+        int x = find(from), y = find(to);
+        if (x == y) return false;
+        fa[x] = y;
+        return true;
+    }
+};
+
 // 边权并查集模板
 template<typename T>
 class UnionFind {
