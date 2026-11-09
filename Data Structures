@@ -6,17 +6,17 @@ class NumMatrix {
     Matrix sum;
 public:
     NumMatrix(Matrix& mat) {
-        i32 m = mat.size(), n = mat[0].size();
-        sum.resize(m + 1, vector<i32>(n + 1));
-        for (i32 i = 0; i < m; i++) {
-            for (i32 j = 0; j < n; j++) {
+        int m = mat.size(), n = mat[0].size();
+        sum.resize(m + 1, std::vector<int>(n + 1));
+        for (int i = 0; i < m; i++) {
+            for (int j = 0; j < n; j++) {
                 sum[i + 1][j + 1] = sum[i + 1][j] + sum[i][j + 1] - sum[i][j] + mat[i][j];
             }
         }
     }
 
     // 返回左上角在 (r1, c1)，右下角在 (r2, c2) 的子矩阵元素和
-    i32 sumRegion(i32 r1, i32 c1, i32 r2, i32 c2) {
+    int sumRegion(int r1, int c1, int r2, int c2) {
         return sum[r2 + 1][c2 + 1] - sum[r2 + 1][c1] - sum[r1][c2 + 1] + sum[r1][c1];
     }
 };
@@ -93,6 +93,7 @@ public:
 
 #### st表
 ```cpp
+// 普通st表
 class SparseTable {
     std::vector<std::vector<int>> st_max;
 public:
@@ -102,14 +103,17 @@ public:
         for (int j = 0; j < n; j++) st_max[0][j] = nums[j];
         for (int i = 1; i < w; i++) 
             for (int j = 0; j <= n - (1 << i); j++) 
-                st_max[i][j] = std::max(st_max[i - 1][j], st_max[i - 1][j + (1 << (i - 1))]);
+                st_max[i][j] = std::max(st_max[i - 1][j], st_max[i - 1][j + (1 << (i - 1))]); // i表示2 ^ i步之后
     }
     
     int query_max(int l, int r) {
-        int k = std::bit_width((u32)r - l) - 1;
-        return std::max(st_max[k][l], st_max[k][r - (1 << k)]);
+        int k = std::bit_width((u32)r - l) - 1; // 查询开区间[l, r), 可以改成r - l + 1查闭区间
+        return std::max(st_max[k][l], st_max[k][r - (1 << k)]); // 闭区间时要 + 1
     }
 };
+
+// 不想交st表(猫树)
+
 ```
 
 #### 树状数组
@@ -137,61 +141,6 @@ public:
     T query(int l, int r) const {
         if (r < l) return 0;
         return pre(r) - pre(l - 1);
-    }
-};
-
-//值域树状数组
-class FenwickTree {
-    const vector<int>& sorted;
-    const int high_bit;
-    vector<int> cnt;
-    vector<long long> sum;
-
-public:
-    FenwickTree(const vector<int>& sorted) :
-        sorted(sorted),
-        high_bit(1 << (bit_width(sorted.size()) - 1)),
-        cnt(sorted.size() + 1),
-        sum(sorted.size() + 1) {}
-
-    // 添加 num 个 val，其中 val 离散化后的值为 i（i 从 1 开始）
-    // 如果 num < 0，表示减少 -num 个 val
-    // 注意 val = sorted[i - 1]，无需手动传入
-    void update(int i, int num) {
-        auto val = sorted[i - 1];
-        for (; i < cnt.size(); i += i & -i) {
-            cnt[i] += num;
-            sum[i] += 1LL * num * val;
-        }
-    }
-
-    // 返回第 k 小的数（k 从 1 开始）
-    int kth(int k) const {
-        int i = 0;
-        for (int b = high_bit; b > 0; b >>= 1) {
-            int nxt = i | b;
-            if (nxt < cnt.size() && cnt[nxt] < k) {
-                k -= cnt[nxt];
-                i = nxt;
-            }
-        }
-        return sorted[i];
-    }
-
-    // 返回前 k 小的数之和（k 从 1 开始）
-    long long pre_sum(int k) const {
-        long long s = 0;
-        int i = 0;
-        for (int b = high_bit; b > 0; b >>= 1) {
-            int nxt = i | b;
-            if (nxt < cnt.size() && cnt[nxt] < k) {
-                k -= cnt[nxt];
-                s += sum[nxt];
-                i = nxt;
-            }
-        }
-        // 加上等于第 k 小的数
-        return s + 1LL * sorted[i] * k;
     }
 };
 ```
