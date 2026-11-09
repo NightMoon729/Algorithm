@@ -2,11 +2,11 @@
 #### 判断质数
 ```cpp
 //判断质数模板
-bool is_prime(i32 n) {
-    for (i32 i = 2; i * i <= n; i++) 
+bool is_prime(int n) {
+    for (int i = 2; i * i <= n; i++) 
         if (n % i == 0) return false;
     return n >= 2; // 1 不是质数
-}
+} // O (sqrt(n)) 
 
 
 //预处理是否为质数
@@ -24,37 +24,37 @@ auto init = [] {
         }
     }
     return 0;
-}();
+}(); // O(nloglogn)
 ```
 
 #### 质因数分解
 ```cpp
 //质因数分解模板
-constexpr i32 MX = 1'000'001;
+constexpr int MX = 1'000'001;
 bool is_prime[MX];
-vector<i32> primes;
+vector<int> primes;
 auto init = [] {
     ranges::fill(is_prime, true);
     is_prime[0] = is_prime[1] = false; 
-    for (i32 i = 2; i < MX; i++) {
+    for (int i = 2; i < MX; i++) {
         if (is_prime[i]) {
             primes.push_back(i);
             for (i64 j = 1LL * i * i; j < MX; j += i) is_prime[j] = false; 
         }
     }
     return 0;
-}();
+}(); // O(nloglogn)
 
 //最小质因数模板
-constexpr i32 MX = 1'000'001;
-i32 lpf[MX];
-i32 init = [] {
-    for (i32 i = 2; i < MX; i++) 
+constexpr int MX = 1'000'001;
+int lpf[MX];
+int init = [] {
+    for (int i = 2; i < MX; i++) 
         if (lpf[i] == 0) 
-            for (i32 j = i; j < MX; j += i) 
+            for (int j = i; j < MX; j += i) 
                 if (lpf[j] == 0) lpf[j] = i; 
     return 0;
-}();
+}(); // O(nloglogn)
 ```
 
 #### 扩展欧几里得算法
@@ -87,6 +87,36 @@ i64 crt(const std::vector<i64>& b, const std::vector<i64>& m) {
     }
     res = (res + M) % M;
     return res;
+}
+
+// EXCRT 
+i64 divM(i64 a, i64 b, i64 m) {
+    if (m == 1) return 0;
+    i64 x, y;
+    exgcd(b, m, x, y);
+    x = (x % m + m) % m;
+    a = (a % m + m) % m;
+    return (i64)((i128)a * x % m);
+}
+
+// (Aim)t = Bi - Aix (mod mi)
+std::pair<i64, i64> excrt(std::vector<i64>& A, std::vector<i64>& B, std::vector<i64>& M) {
+    i64 x = 0, m = 1;
+    for (int i = 0; i < M.size(); i++) {
+        i64 mi = M[i]; // 当前要合并的模数
+        i64 ai = (A[i] % mi + mi) % mi; // 将系数对模数取模
+        i64 a = (i64)((i128)ai * (m % mi) % mi); // a是t的系数
+        i64 b = (i64)(((i128)B[i] - (i128)A[i] * x) % mi); // 把当前解 x 代入后得到的右端常数项：B[i] - A[i] * x
+        b = (b % mi + mi) % mi;
+        i64 d = std::gcd(a, mi);
+        if (b % d != 0) return {0, -1}; // 无解
+        i64 t = divM(b / d, a / d, mi / d);
+        i64 nm = m * (mi / d); // 最小答案
+        x = (i64)(((i128)x + (i128)m * t) % nm);
+        m = nm; // 用于下一轮构造 B[i] = x + mt
+    }
+    x = (x % m + m) % m;
+    return {x, m};
 }
 ```
 
@@ -140,6 +170,7 @@ bool parse_mod(std::string s, i64& n, int m) {
     }
     return flg;
 }
+
 i64 exPhiBigPow(std::string a, std::string b, int m) { //超大指数情形
     int phi = calaPhi(m);
     i64 exp = 0, bn = 0; 
@@ -184,7 +215,7 @@ i64 babyStepGiantStep(i64 a, i64 b, i64 p, i64 k) {
         x = x * a % p;
     }
     return -99;
-}
+} // O(sqrt(n))
 ```
 
 # 组合数学
@@ -328,7 +359,7 @@ std::pair<std::vector<f64>, bool> gaussJordanElimination(const Matrix &A, const 
     std::vector<f64> res(n);
     for (int i = 0; i < n; ++i) res[i] = a[i][n];
     return {res, false};
-}
+} // O(n ^ 3)
 ```
 
 #### 线性基
@@ -358,7 +389,7 @@ public:
             res = max(res, res ^ b[i]);
         return res;
     }
-};
+}; // O(n)
 ```
 
 # 计算几何
@@ -394,7 +425,7 @@ std::vector<Vec> convexHull(std::vector<Vec>& points) {
     }
     q.pop_back();
     return q;
-}
+} // O(nlogn)
 ```
 
 #### 公式
