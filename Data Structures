@@ -22,6 +22,7 @@ public:
 };
 ```
 
+
 #### 并查集
 ```cpp
 //普通并查集模板
@@ -91,6 +92,7 @@ public:
 };
 ```
 
+
 #### st表
 ```cpp
 // 普通st表
@@ -103,18 +105,54 @@ public:
         for (int j = 0; j < n; j++) st_max[0][j] = nums[j];
         for (int i = 1; i < w; i++) 
             for (int j = 0; j <= n - (1 << i); j++) 
-                st_max[i][j] = std::max(st_max[i - 1][j], st_max[i - 1][j + (1 << (i - 1))]); // i表示2 ^ i步之后
+                st_max[i][j] = std::max(st_max[i - 1][j], st_max[i - 1][j + (1 << (i - 1))]);
     }
     
     int query_max(int l, int r) {
-        int k = std::bit_width((u32)r - l) - 1; // 查询开区间[l, r), 可以改成r - l + 1查闭区间
-        return std::max(st_max[k][l], st_max[k][r - (1 << k)]); // 闭区间时要 + 1
+        int k = std::bit_width((u32)r - l) - 1;
+        return std::max(st_max[k][l], st_max[k][r - (1 << k)]);
     }
 };
 
 // 不想交st表(猫树)
+class DisjointSparseTable {
+    std::vector<std::vector<int>> st;
+public:
+    DisjointSparseTable(std::vector<int>& nums) {
+        int n = nums.size();
+        int w = std::bit_width((u32)n);
+        st.resize(w, std::vector<int>(n));
+        for (int j = 0; j < n; j++) st[0][j] = nums[j];
+        
+        for (int k = 1; k < w; k++) {
+            int B = 1 << (k + 1);
+            for (int m = 0; m < n; m += B) {
+                int mid = std::min(m + (1 << k), n);
+            
+                st[k][mid - 1] = nums[mid - 1];
+                for (int i = mid - 2; i >= m; i--) {
+                    st[k][i] = std::max(nums[i], st[k][i + 1]);
+                }
+                
+                if (mid < n) {
+                    int end = std::min(m + B, n);
+                    st[k][mid] = nums[mid];
+                    for (int i = mid + 1; i < end; i++) 
+                        st[k][i] = std::max(st[k][i - 1], nums[i]);
+                }
+            }
+        }
+    }
 
+    // [l, r] 闭区间，下标从 0 开始
+    int query_max(int l, int r) {
+        if (l == r) return st[0][l];
+        int k = std::bit_width((u32)(l ^ r)) - 1;
+        return std::max(st[k][l], st[k][r]);
+    }
+};
 ```
+
 
 #### 树状数组
 ``` cpp
@@ -122,7 +160,6 @@ public:
 template<typename T>
 class FenwickTree {
     std::vector<T> tree;
-
 public:
     FenwickTree(int n) : tree(n + 1) {}
 
@@ -133,8 +170,7 @@ public:
 
     T pre(int i) const {
         T res{};
-        for (; i > 0; i &= i - 1)
-            res += tree[i];
+        for (; i > 0; i &= i - 1) res += tree[i];
         return res;
     }
 
@@ -144,6 +180,7 @@ public:
     }
 };
 ```
+
 
 #### 线段树
 ``` cpp
@@ -312,6 +349,7 @@ public:
     }
 };
 ```
+
 
 #### 莫队
 ``` cpp
