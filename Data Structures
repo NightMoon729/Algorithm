@@ -109,8 +109,8 @@ public:
     }
     
     int query_max(int l, int r) {
-        int k = std::bit_width((u32)r - l) - 1;
-        return std::max(st_max[k][l], st_max[k][r - (1 << k)]);
+        int k = std::bit_width((u32)r - l + 1) - 1;
+        return std::max(st_max[k][l], st_max[k][r - (1 << k) + 1]);
     }
 };
 
@@ -144,7 +144,6 @@ public:
         }
     }
 
-    // [l, r] 闭区间，下标从 0 开始
     int query_max(int l, int r) {
         if (l == r) return st[0][l];
         int k = std::bit_width((u32)(l ^ r)) - 1;
