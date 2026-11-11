@@ -130,9 +130,8 @@ public:
                 int mid = std::min(m + (1 << k), n);
             
                 st[k][mid - 1] = nums[mid - 1];
-                for (int i = mid - 2; i >= m; i--) {
+                for (int i = mid - 2; i >= m; i--) 
                     st[k][i] = std::max(nums[i], st[k][i + 1]);
-                }
                 
                 if (mid < n) {
                     int end = std::min(m + B, n);
