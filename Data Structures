@@ -114,7 +114,7 @@ public:
     }
 };
 
-// 不想交st表(猫树)
+// 不相交st表(猫树)
 class DisjointSparseTable {
     std::vector<std::vector<int>> st;
 public:
@@ -175,6 +175,54 @@ public:
     T query(int l, int r) const {
         if (r < l) return 0;
         return pre(r) - pre(l - 1);
+    }
+};
+
+// 值域树状数组
+class FenwickTree {
+    std::vector<int>& sorted;
+    int high_bit;
+    std::vector<int> cnt;
+    std::vector<i64> sum;
+public:
+    explicit FenwickTree(std::vector<int>& sorted) :
+        sorted(sorted),
+        high_bit(1 << (std::bit_width(sorted.size()) - 1)),
+        cnt(sorted.size() + 1),
+        sum(sorted.size() + 1) {}
+    
+    void update(int i, int num) {
+        auto val = sorted[i - 1];
+        for (; i < cnt.size(); i += i & -i) {
+            cnt[i] += num;
+            sum[i] += 1LL * num * val;
+        }
+    }
+    
+    int kth(int k) {
+        int i = 0;
+        for (int b = high_bit; b > 0; b >>= 1) {
+            int nxt = i | b;
+            if (nxt < cnt.size() && cnt[nxt] < k) {
+                k -= cnt[nxt];
+                i = nxt;
+            }
+        }
+        return sorted[i];
+    }
+    
+    i64 pre_sum(int k) {
+        i64 s = 0;
+        int i = 0;
+        for (int b = high_bit; b > 0; b >>= 1) {
+            int nxt = i | b;
+            if (nxt < cnt.size() && cnt[nxt] < k) {
+                k -= cnt[nxt];
+                s += sum[nxt];
+                i = nxt;
+            }
+        }
+        return s + 1LL * sorted[i] * k;
     }
 };
 ```
