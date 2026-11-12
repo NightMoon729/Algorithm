@@ -181,19 +181,19 @@ public:
 // 值域树状数组
 class FenwickTree {
     std::vector<int>& sorted;
-    int high_bit;
+    int high_bit, n;
     std::vector<int> cnt;
     std::vector<i64> sum;
 public:
     explicit FenwickTree(std::vector<int>& sorted) :
         sorted(sorted),
         high_bit(1 << (std::bit_width(sorted.size()) - 1)),
-        cnt(sorted.size() + 1),
+        cnt(sorted.size() + 1), n(sorted.size() + 1),
         sum(sorted.size() + 1) {}
     
     void update(int i, int num) {
         auto val = sorted[i - 1];
-        for (; i < cnt.size(); i += i & -i) {
+        for (; i < n; i += i & -i) {
             cnt[i] += num;
             sum[i] += 1LL * num * val;
         }
@@ -203,7 +203,7 @@ public:
         int i = 0;
         for (int b = high_bit; b > 0; b >>= 1) {
             int nxt = i | b;
-            if (nxt < cnt.size() && cnt[nxt] < k) {
+            if (nxt < n && cnt[nxt] < k) {
                 k -= cnt[nxt];
                 i = nxt;
             }
@@ -216,7 +216,7 @@ public:
         int i = 0;
         for (int b = high_bit; b > 0; b >>= 1) {
             int nxt = i | b;
-            if (nxt < cnt.size() && cnt[nxt] < k) {
+            if (nxt < n && cnt[nxt] < k) {
                 k -= cnt[nxt];
                 s += sum[nxt];
                 i = nxt;
